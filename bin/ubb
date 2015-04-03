@@ -1,4 +1,92 @@
 #!/usr/bin/env ruby
+$:.unshift "#{File.expand_path(File.dirname(__FILE__))}/../lib"
+require 'ubb'
+require 'optparse'
+require 'fileutils'
+
+class App
+  include FileUtils
+  include Ubb
+  TASKS = {
+    "export-package" => :export_package,
+    "import-package" => :import_package,
+  }
+  def initialize()
+    @unity_app_path = "/Applications/Unity/Unity.app/Contents/MacOS/Unity"
+    @project = ''
+    @output = ''
+    @options = {
+      :f => nil,
+    }
+  end
+  def execute(argv)
+    @task = ''
+    @task = argv.shift if TASKS.keys.include?(argv[0])
+    parse(argv)
+    unless @task.empty?
+      self.method(TASKS[@task]).call
+    end
+
+    #ubbfilename = @options[:f] || 'Ubbfile'
+    #if File.exist?(ubbfilename)
+    #  ubb = UbbFile.new
+    #  ubb.parse(ubbfilename)
+    #else
+    #  raise 'ERROR'
+    #end
+  end
+
+
+  def parse(argv)
+    OptionParser.new do |opt|
+      opt.on("--unity-app-path UNITY_APP_PATH") { |f| @unity_app_path = f }
+      opt.on("--project PROJECT_PATH") { |f| @project = f }
+      opt.on("-f UBBFILE") { |f| @options[:f] = f }
+      opt.on("-o OUTPUTFILE") { |f| @output = f }
+      opt.parse!(argv)
+    end
+    @project = find_project_path if @project.empty?
+    @argv = argv
+  end
+
+
+  def find_project_path
+    dirs = Dir.glob("**/Assets")
+    return nil if dirs.empty?
+    File.expand_path(dirs[0].sub(/(\/)?Assets$/, ''))
+  end
+
+  def export_package()
+    raise 'specify output' if @output.empty?
+    @output += ".unitypackage" if @output !~ /\.unitypackage$/
+    paths = @argv.map { |pt| "Assets/#{pt}" }.join(' ')
+    p paths
+    p "#{@unity_app_path} -batchmode -projectPath #{@project} -exportPackage #{paths} #{@output} -quit"
+    system "#{@unity_app_path} -batchmode -projectPath #{@project} -exportPackage #{paths} #{@output} -quit"
+    p self
+  end
+  def import_package()
+    p self
+  end
+
+
+
+
+
+  #sh "#{UNITY_APP} -batchmode -projectPath #{PROJECT_PATH} -exportPackage Assets/#{EDITOR_ROOT} Assets/#{PLUGINS_ROOT} #{ADDITIONAL_EXPORT_PATH} ../#{UNITYPACKAGE_PATH} -quit"
+
+
+end
+
+
+
+
+
+
+
+App.new.execute(ARGV)
+
+
 
 
 p "HOGE"

@@ -1,5 +1,23 @@
 require "ubb/version"
 
+
 module Ubb
-  # Your code goes here...
+  class UbbFile
+    def parse(filename)
+      s = File.read(filename)
+      eval(s)
+    end
+
+    def ubb(v)
+      p v
+    end
+
+
+
+  end
+
+
+
+
+
 end
