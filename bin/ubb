@@ -8,8 +8,8 @@ class App
   include FileUtils
   include Ubb
   TASKS = {
-    "export-package" => :export_package,
-    "import-package" => :import_package,
+    "export" => :task_export_package,
+    "import" => :task_import_package,
   }
   def initialize()
     @unity_app_path = "/Applications/Unity/Unity.app/Contents/MacOS/Unity"
@@ -55,25 +55,36 @@ class App
     return nil if dirs.empty?
     File.expand_path(dirs[0].sub(/(\/)?Assets$/, ''))
   end
+  def sh(cmd)
+    print cmd
+    system cmd
+    exit $? if $? != 0
+  end
 
-  def export_package()
+  # export unitypackage
+  #sh "#{UNITY_APP} -batchmode -projectPath #{PROJECT_PATH} -exportPackage Assets/#{EDITOR_ROOT} Assets/#{PLUGINS_ROOT} #{ADDITIONAL_EXPORT_PATH} ../#{UNITYPACKAGE_PATH} -quit"
+  def task_export_package()
     raise 'specify output' if @output.empty?
     @output += ".unitypackage" if @output !~ /\.unitypackage$/
     paths = @argv.map { |pt| "Assets/#{pt}" }.join(' ')
-    p paths
-    p "#{@unity_app_path} -batchmode -projectPath #{@project} -exportPackage #{paths} #{@output} -quit"
-    system "#{@unity_app_path} -batchmode -projectPath #{@project} -exportPackage #{paths} #{@output} -quit"
-    p self
+    output = File.expand_path(@output)
+    sh "#{@unity_app_path} -batchmode -projectPath #{@project} -exportPackage #{paths} #{output} -quit"
+    #p self
   end
-  def import_package()
-    p self
+  # import unitypackage
+  #sh "#{UNITY_APP} -batchmode -projectPath #{File.expand_path(PROJECT_PATH)} -importPackage #{latest} -quit"
+  def task_import_package()
+    raise 'specify unitypackage file' if @argv.size == 0
+    raise 'too many unitypackage files' if @argv.size > 1
+    input = @argv.shift
+    raise "does not exist #{input}" unless File.exist?(@argv)
+    sh "#{@unity_app_path} -batchmode -projectPath #{@project} -importPackage #{input} -quit"
   end
 
 
 
 
 
-  #sh "#{UNITY_APP} -batchmode -projectPath #{PROJECT_PATH} -exportPackage Assets/#{EDITOR_ROOT} Assets/#{PLUGINS_ROOT} #{ADDITIONAL_EXPORT_PATH} ../#{UNITYPACKAGE_PATH} -quit"
 
 
 end
@@ -85,11 +96,4 @@ end
 
 
 App.new.execute(ARGV)
-
-
-
-
-p "HOGE"
-
-
 
