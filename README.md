@@ -2,6 +2,14 @@
 
 Helper for Unity batch build.
 
+[![Gem Version](https://badge.fury.io/rb/ubb.svg)](http://badge.fury.io/rb/ubb)
+
+
+## Description
+
+Unity Editor からビルドしたりパッケージを入出力する時に使うツールです。
+
+
 ## Installation
 
 Add this line to your application's Gemfile:
@@ -24,6 +32,40 @@ Or install it yourself as:
 $ ubb export -o hoge.unitypackage Plugins/hoge
 $ ubb import hoge.unitypackage
 ```
+
+Unity のプロジェクトフォルダは、明示的に指定されなければカレントディレクトリ以下で、最初に見つかったものを自動的に選択します。
+明示的に指定するには `--project PATH` オプションを使用してください。
+
+
+
+### export
+
+指定したフォルダ及びファイルを .unitypackage としてエクスポートします。
+
+```
+ubb export -o '出力ファイル名' 'パッケージに含むファイル名（フォルダ可＆複数指定可）'
+```
+
+### import
+
+指定した .unitypackage をプロジェクトにインポートします。
+
+```
+ubb import 'パッケージファイル名'
+```
+
+### build
+
+（開発中）
+
+
+
+
+
+
+
+
+
 
 ## Contributing
 
