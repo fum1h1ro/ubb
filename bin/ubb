@@ -1,149 +1,33 @@
 #!/usr/bin/env ruby
-LIB_PATH = "#{File.expand_path(File.dirname(__FILE__))}/../lib"
+LIB_PATH = File.expand_path("../../lib", __FILE__)
 $:.unshift LIB_PATH
+
+#require 'rubygems'
+require 'commander/import'
 require 'ubb'
 require 'optparse'
 require 'fileutils'
 require 'erb'
 
-class App
-  include FileUtils
-  include Ubb
-  TASKS = {
-    "showlog" => :task_showlog,
-    "export" => :task_export_package,
-    "import" => :task_import_package,
-    "build" => :task_build,
-  }
-
-  class AppError < StandardError
-    attr_reader :status
-    def initialize(msg, status)
-      super(msg)
-      @status = status
-    end
+$unity_app_path = "/Applications/Unity/Unity.app/Contents/MacOS/Unity"
+dirs = Dir.glob("**/Assets")
+dirs.each do |d|
+  d = d.sub(/(\/)?Assets$/, '')
+  if Dir.exist?("#{d}/ProjectSettings")
+    $project_path = File.expand_path(d)
   end
-
-
-
-  def initialize()
-    @unity_app_path = "/Applications/Unity/Unity.app/Contents/MacOS/Unity"
-    @project = ''
-    @output = ''
-    @options = {
-      :f => nil,
-      :build_path => "/../project",
-    }
-  end
-  def execute(argv)
-    @task = ''
-    @task = argv.shift if TASKS.keys.include?(argv[0])
-    parse(argv)
-    unless @task.empty?
-      self.method(TASKS[@task]).call
-    end
-
-    #ubbfilename = @options[:f] || 'Ubbfile'
-    #if File.exist?(ubbfilename)
-    #  ubb = UbbFile.new
-    #  ubb.parse(ubbfilename)
-    #else
-    #  raise 'ERROR'
-    #end
-  end
-
-
-  def parse(argv)
-    OptionParser.new do |opt|
-      opt.on("--unity-app-path UNITY_APP_PATH") { |f| @unity_app_path = f }
-      opt.on("--project PROJECT_PATH") { |f| @project = f }
-      opt.on("-f UBBFILE") { |f| @options[:f] = f }
-      opt.on("-o OUTPUTFILE") { |f| @output = f }
-      opt.parse!(argv)
-    end
-    @project = find_project_path if @project.empty?
-    @assets_path = "#{@project}/Assets"
-    @editor_path = "#{@assets_path}/Editor"
-    @argv = argv
-  end
-
-
-  def find_project_path
-    dirs = Dir.glob("**/Assets")
-    return nil if dirs.empty?
-    File.expand_path(dirs[0].sub(/(\/)?Assets$/, ''))
-  end
-  def sh(cmd)
-    print "exec: #{cmd}\n"
-    system cmd
-    if $? != 0
-      raise AppError.new("SHELL ERROR", $?.to_i)
-    end
-  end
-  def has_editor?
-    Dir.exist?(@editor_path)
-  end
-
-
-
-  def task_showlog
-    log = '~/Library/Logs/Unity/Editor.log'
-    sh "less #{log}"
-  end
-
-
-  # export unitypackage
-  #sh "#{UNITY_APP} -batchmode -projectPath #{PROJECT_PATH} -exportPackage Assets/#{EDITOR_ROOT} Assets/#{PLUGINS_ROOT} #{ADDITIONAL_EXPORT_PATH} ../#{UNITYPACKAGE_PATH} -quit"
-  def task_export_package()
-    raise 'specify output' if @output.empty?
-    @output += ".unitypackage" if @output !~ /\.unitypackage$/
-    paths = @argv.map { |pt| "Assets/#{pt}" }.join(' ')
-    output = File.expand_path(@output)
-    sh "#{@unity_app_path} -batchmode -projectPath #{@project} -exportPackage #{paths} #{output} -quit"
-    #p self
-  end
-  # import unitypackage
-  #sh "#{UNITY_APP} -batchmode -projectPath #{File.expand_path(PROJECT_PATH)} -importPackage #{latest} -quit"
-  def task_import_package()
-    raise 'specify unitypackage file' if @argv.size == 0
-    raise 'too many unitypackage files' if @argv.size > 1
-    input = @argv.shift
-    raise "does not exist #{input}" unless File.exist?(@argv)
-    sh "#{@unity_app_path} -batchmode -projectPath #{@project} -importPackage #{input} -quit"
-  end
-  # build
-  #$UNITY_APP_DIR -batchmode -projectPath $UNITY_PROJECT_PATH -quit -executeMethod Build.PerformiOSBuild $ADDITIONAL_OPTS -logFile UnityBuildLog.txt
-  def task_build()
-    raise 'specify output' if @output.empty?
-    begin
-      he = has_editor?
-      mkdir_p @editor_path unless he
-      cs = File.read("#{LIB_PATH}/Build.cs")
-      output = File.expand_path(@output)
-      csfile = File.open("#{@editor_path}/Build.cs", "w+")
-      csfile.write(ERB.new(cs).result binding)
-      csfile.flush
-      sh "#{@unity_app_path} -batchmode -projectPath #{@project} -quit -executeMethod Build.PerformiOSBuild -target DEV"
-    ensure
-      unless he
-        rm_rf @editor_path
-        rm_f "#{@editor_path}.meta"
-      end
-    end
-  end
-
-
-
-
-
-
 end
 
+program :version, Ubb::VERSION
+program :description, 'Unity Batch Build helper'
+program :help_formatter, :compact
 
+global_option('--verbose', 'VERBOSE') { $verbose = true }
+global_option('-p', '--project PATH', 'specify Unity project path') { |path| $project_path = path }
+global_option('-u', '--unity PATH', 'specify Unity application path') { |path| $unity_app_path = path }
 
+default_command :help
 
+always_trace!
 
-
-
-App.new.execute(ARGV)
 

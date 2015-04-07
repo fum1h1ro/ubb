@@ -17,7 +17,7 @@ public class Build {
   static void PerformBuild() {
     Debug.Log("build start");
     string[] scenes = GetAllScenes();
-    update_symbols();
+    //update_symbols();
     string error = BuildPipeline.BuildPlayer(scenes, "build.apk",  BuildTarget.Android, BuildOptions.None);
     if (string.IsNullOrEmpty(error)) {
       Debug.Log("build end");
@@ -30,6 +30,7 @@ public class Build {
   }
   // iOS
   public static void PerformiOSBuild() {
+    BuildTargetGroup group = BuildTargetGroup.iOS;
     Debug.Log("build start");
     string[] scenes = GetAllScenes();
     BuildOptions opt = BuildOptions.SymlinkLibraries;
@@ -56,14 +57,13 @@ public class Build {
       PlayerSettings.iOS.scriptCallOptimization = ScriptCallOptimizationLevel.FastButNoExceptions;
       break;
     }
-    push_symbols();
+    push_symbols(group);
     //
-    update_symbols();
+    update_symbols(group);
     BuildTarget buildTarget = BuildTarget.iOS;
-    //string path = Path.GetFullPath(Application.dataPath + "/../project");
     string error = BuildPipeline.BuildPlayer(scenes, _buildPath,  buildTarget, opt);
     //
-    pop_symbols();
+    pop_symbols(group);
     //
     if (string.IsNullOrEmpty(error)) {
       Debug.Log("build end");
@@ -93,28 +93,21 @@ public class Build {
     }
     return argv;
   }
-  private static void push_symbols() {
-    BuildTargetGroup tg = EditorUserBuildSettings.selectedBuildTargetGroup;
-    _bakDefines = PlayerSettings.GetScriptingDefineSymbolsForGroup(tg);
+  private static void push_symbols(BuildTargetGroup group) {
+    _bakDefines = PlayerSettings.GetScriptingDefineSymbolsForGroup(group);
   }
-  private static void pop_symbols() {
-    BuildTargetGroup tg = EditorUserBuildSettings.selectedBuildTargetGroup;
-    if (string.IsNullOrEmpty(_bakDefines)) {
-      PlayerSettings.SetScriptingDefineSymbolsForGroup(tg, null);
-    } else {
-      PlayerSettings.SetScriptingDefineSymbolsForGroup(tg, _bakDefines);
-    }
+  private static void pop_symbols(BuildTargetGroup group) {
+    PlayerSettings.SetScriptingDefineSymbolsForGroup(group, _bakDefines);
   }
-  private static void update_symbols() {
-    BuildTargetGroup tg = EditorUserBuildSettings.selectedBuildTargetGroup;
+  private static void update_symbols(BuildTargetGroup group) {
     List<string> symbols = get_argv("-symbol");
-    string defines = PlayerSettings.GetScriptingDefineSymbolsForGroup(tg);
+    string defines = PlayerSettings.GetScriptingDefineSymbolsForGroup(group);
     Debug.Log(string.Format("OLD: {0}", defines));
     foreach (string sym in symbols) {
       defines += string.Format(";{0}", sym);
     }
     Debug.Log(string.Format("NEW: {0}", defines));
-    PlayerSettings.SetScriptingDefineSymbolsForGroup(tg, defines);
+    PlayerSettings.SetScriptingDefineSymbolsForGroup(group, defines);
   }
   private static Target get_target() {
     List<string> tgts = get_argv("-target");
