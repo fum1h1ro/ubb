@@ -8,18 +8,18 @@ Gem::Specification.new do |spec|
   spec.version       = Ubb::VERSION
   spec.authors       = ["fum1h1ro"]
   spec.email         = ["fumihiro@gmail.com"]
-  spec.summary       = %q{Unity Batch Build Helper}
-  spec.description   = %q{Helping batch build from Unity Editor}
-  spec.homepage      = ""
+  spec.summary       = %q{Ubb}
+  spec.description   = %q{CLI for helping batch building from Unity Editor}
+  spec.homepage      = "https://github.com/fum1h1ro/ubb"
   spec.license       = "MIT"
 
   spec.files         = `git ls-files -z`.split("\x0")
   spec.executables   = spec.files.grep(%r{^bin/}) { |f| File.basename(f) }
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
-  spec.require_paths = ["lib", "bin"]
+  spec.require_paths = ["lib"]
 
   spec.add_development_dependency "bundler", "~> 1.7"
   spec.add_development_dependency "rake", "~> 10.0"
   spec.add_development_dependency "rspec"
-  spec.add_development_dependency "commander", "~> 4.3"
+  spec.add_dependency "commander", "~> 4.3"
 end

@@ -1,7 +1,6 @@
 #!/usr/bin/env ruby
 LIB_PATH = File.expand_path("../../lib", __FILE__)
 $:.unshift LIB_PATH
-
 #require 'rubygems'
 require 'commander/import'
 require 'ubb'
@@ -10,13 +9,7 @@ require 'fileutils'
 require 'erb'
 
 $unity_app_path = "/Applications/Unity/Unity.app/Contents/MacOS/Unity"
-dirs = Dir.glob("**/Assets")
-dirs.each do |d|
-  d = d.sub(/(\/)?Assets$/, '')
-  if Dir.exist?("#{d}/ProjectSettings")
-    $project_path = File.expand_path(d)
-  end
-end
+$project_path = nil
 
 program :version, Ubb::VERSION
 program :description, 'Unity Batch Build helper'

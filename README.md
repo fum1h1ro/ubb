@@ -12,19 +12,11 @@ Unity Editor からビルドしたりパッケージを入出力する時に使�
 
 ## Installation
 
-Add this line to your application's Gemfile:
+Install it yourself as:
 
-```ruby
-gem 'ubb'
 ```
-
-And then execute:
-
-    $ bundle
-
-Or install it yourself as:
-
-    $ gem install ubb
+$ gem install ubb
+```
 
 ## Usage
 

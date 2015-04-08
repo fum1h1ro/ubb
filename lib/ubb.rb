@@ -15,6 +15,16 @@ module Ubb
   def self.has_editor?
     Dir.exist?(self.editor_path)
   end
+  def self.find_project
+    return if $project_path.nil?
+    dirs = Dir.glob("**/Assets")
+    dirs.each do |d|
+      d = d.sub(/(\/)?Assets$/, '')
+      if Dir.exist?("#{d}/ProjectSettings")
+        $project_path = File.expand_path(d)
+      end
+    end
+  end
 end
 
 command :showlog do |c|
@@ -28,6 +38,7 @@ end
 alias_command :log, :showlog
 
 command :export do |c|
+  Ubb.find_project
   c.syntax = 'ubb export [options]'
   c.summary = 'export .unitypackage'
   c.description = 'hoge'
@@ -43,6 +54,7 @@ command :export do |c|
 end
 
 command :import do |c|
+  Ubb.find_project
   c.syntax = 'ubb import [package]'
   c.summary = 'import .unitypackage'
   c.description = 'hoge'
@@ -57,6 +69,7 @@ command :import do |c|
 end
 
 command :build do |c|
+  Ubb.find_project
   c.option '--output PATH', String, 'specify output path'
   c.action do |args, options|
     raise 'specify output path' if options.output.nil?
