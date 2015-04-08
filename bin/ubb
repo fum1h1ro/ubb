@@ -9,7 +9,6 @@ require 'fileutils'
 require 'erb'
 
 $unity_app_path = "/Applications/Unity/Unity.app/Contents/MacOS/Unity"
-$project_path = nil
 
 program :version, Ubb::VERSION
 program :description, 'Unity Batch Build helper'

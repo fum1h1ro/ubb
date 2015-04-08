@@ -5,16 +5,17 @@ using System.IO;
 using UnityEditor;
 
 public class Build {
-  enum Target {
+  enum Config {
     Unknown,
     Development,
     Release,
-    Final,
+    Distribution,
   }
   private static string _bakDefines;
   private static string _buildPath = "<%= output %>";
   // Android
-  static void PerformBuild() {
+  public static void PerformBuild_android() {
+    BuildTargetGroup group = BuildTargetGroup.Android;
     Debug.Log("build start");
     string[] scenes = GetAllScenes();
     //update_symbols();
@@ -29,29 +30,29 @@ public class Build {
     }
   }
   // iOS
-  public static void PerformiOSBuild() {
+  public static void PerformBuild_ios() {
     BuildTargetGroup group = BuildTargetGroup.iOS;
     Debug.Log("build start");
     string[] scenes = GetAllScenes();
     BuildOptions opt = BuildOptions.SymlinkLibraries;
-    Target tgt = (UnityEditorInternal.InternalEditorUtility.inBatchMode) ? get_target() : Target.Development;
-    if (tgt == Target.Unknown) {
+    Config tgt = (UnityEditorInternal.InternalEditorUtility.inBatchMode) ? get_config() : Config.Development;
+    if (tgt == Config.Unknown) {
       Debug.LogError("TARGET UNKNOWN");
       EditorApplication.Exit(1);
     }
     switch (tgt) {
-    case Target.Development:
+    case Config.Development:
       opt |= BuildOptions.Development;
       PlayerSettings.strippingLevel = StrippingLevel.Disabled;
       PlayerSettings.iOS.scriptCallOptimization = ScriptCallOptimizationLevel.SlowAndSafe;
       break;
-    case Target.Release:
+    case Config.Release:
       //opt |= BuildOptions.Development;
       //PlayerSettings.strippingLevel = StrippingLevel.StripByteCode; // リフレクション使ってる箇所で死ぬ
       PlayerSettings.strippingLevel = StrippingLevel.Disabled;
       PlayerSettings.iOS.scriptCallOptimization = ScriptCallOptimizationLevel.FastButNoExceptions;
       break;
-    case Target.Final:
+    case Config.Distribution:
       //PlayerSettings.strippingLevel = StrippingLevel.StripByteCode;
       PlayerSettings.strippingLevel = StrippingLevel.Disabled;
       PlayerSettings.iOS.scriptCallOptimization = ScriptCallOptimizationLevel.FastButNoExceptions;
@@ -60,8 +61,7 @@ public class Build {
     push_symbols(group);
     //
     update_symbols(group);
-    BuildTarget buildTarget = BuildTarget.iOS;
-    string error = BuildPipeline.BuildPlayer(scenes, _buildPath,  buildTarget, opt);
+    string error = BuildPipeline.BuildPlayer(scenes, _buildPath,  BuildTarget.iOS, opt);
     //
     pop_symbols(group);
     //
@@ -109,13 +109,13 @@ public class Build {
     Debug.Log(string.Format("NEW: {0}", defines));
     PlayerSettings.SetScriptingDefineSymbolsForGroup(group, defines);
   }
-  private static Target get_target() {
-    List<string> tgts = get_argv("-target");
+  private static Config get_config() {
+    List<string> tgts = get_argv("-config");
     foreach (string t in tgts) {
-      if (t == "DEV") return Target.Development;
-      if (t == "REL") return Target.Release;
-      if (t == "FNL") return Target.Final;
+      if (t == "development") return Config.Development;
+      if (t == "release") return Config.Release;
+      if (t == "distribution") return Config.Distribution;
     }
-    return Target.Unknown;
+    return Config.Unknown;
   }
 }

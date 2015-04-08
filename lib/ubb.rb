@@ -16,7 +16,7 @@ module Ubb
     Dir.exist?(self.editor_path)
   end
   def self.find_project
-    return if $project_path.nil?
+    return unless $project_path.nil?
     dirs = Dir.glob("**/Assets")
     dirs.each do |d|
       d = d.sub(/(\/)?Assets$/, '')
@@ -24,6 +24,18 @@ module Ubb
         $project_path = File.expand_path(d)
       end
     end
+  end
+  def self.check_target(target)
+    cand = [ 'ios', 'android' ]
+    cand.select! { |c| c =~ /^#{target}/i }
+    return cand[0] if cand.size == 1
+    return nil
+  end
+  def self.check_config(config)
+    cand = [ 'development', 'release', 'distribution' ]
+    cand.select! { |c| c =~ /^#{config}/i }
+    return cand[0] if cand.size == 1
+    return nil
   end
 end
 
@@ -70,28 +82,45 @@ end
 
 command :build do |c|
   Ubb.find_project
+  c.syntax = 'ubb build [options]'
+  c.summary = 'build project'
+  c.description = 'hoge'
+  c.example 'build project', 'ubb build --project path/to/unityproject --output path/to/outputproject'
   c.option '--output PATH', String, 'specify output path'
+  c.option '--target TARGET', String, 'specify build target (ios|android)'
+  c.option '--config COFIGURATION', String, 'specify build configuration (development|release|distribution)'
   c.action do |args, options|
+    options.default :config => 'development'
     raise 'specify output path' if options.output.nil?
+    raise 'specify target' if options.target.nil?
+    output = File.expand_path(options.output)
+    target = Ubb.check_target(options.target)
+    config = Ubb.check_config(options.config)
+    raise "could not recognize a target: \"#{options.target}\"" if target.nil?
     begin
-      output = File.expand_path(options.output)
       has = Ubb.has_editor?
       editor_path = Ubb.editor_path
-      FileUtils.mkdir_p editor_path unless has
       src = "#{LIB_PATH}/assets/UbbBuild.cs"
       dst = "#{editor_path}/UbbBuild.cs"
-      raise 'build script has already existed' if File.exist?(dst)
+      FileUtils.mkdir_p editor_path unless has
+      noop = false
+      if File.exist?(dst)
+        noop = true
+        raise 'build script has already existed'
+      end
       cs = File.read(src)
       csfile = File.open(dst, "w+")
       csfile.write(ERB.new(cs).result binding)
       csfile.flush
-      Ubb.sh "#{$unity_app_path} -batchmode -projectPath #{$project_path} -quit -executeMethod Build.PerformiOSBuild -target DEV"
+      Ubb.sh "#{$unity_app_path} -batchmode -projectPath #{$project_path} -quit -executeMethod Build.PerformBuild_#{target} -config #{config}"
     ensure
-      FileUtils.rm_f "#{editor_path}/UbbBuild.cs"
-      FileUtils.rm_f "#{editor_path}/UbbBuild.cs.meta"
-      unless has
-        FileUtils.rm_rf editor_path
-        FileUtils.rm_f "#{editor_path}.meta"
+      unless noop
+        FileUtils.rm_f "#{editor_path}/UbbBuild.cs"
+        FileUtils.rm_f "#{editor_path}/UbbBuild.cs.meta"
+        unless has
+          FileUtils.rm_rf editor_path
+          FileUtils.rm_f "#{editor_path}.meta"
+        end
       end
     end
   end
