@@ -48,10 +48,16 @@ ubb import 'パッケージファイル名'
 
 ### build
 
-（開発中）
+指定したプロジェクトのビルドを行います。
 
+```
+ubb build --output '出力先フォルダ' --target [ios] --config [development|release|distribution]
+```
 
-
+* target
+  * ビルドターゲットの指定。現在は `ios` のみ。
+* config
+  * ビルドコンフィグの指定。
 
 
 
